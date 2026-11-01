@@ -88,7 +88,10 @@ BSSID (MAC of the access point)
 Channel
 Any connected clients (STATION section)
 
-Note the channel and BSSID. Cancel with Ctrl+C when ready.
+Note the **channel** and **BSSID**.
+> For privacy reasons, I have hidden all detected Wi-Fi networks and connected devices in the screenshot, except for my test network, which remains visible for demonstration purposes.
+
+Cancel with Ctrl+C when ready.
 
 3. Capture traffic to a file
 Lock airodump to the target network so the screen stays clean and the client list remains visible:
