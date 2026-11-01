@@ -1,6 +1,11 @@
 # linux-aircrack
-This guide shows how to use a dictionary attack against **WPA2 Pre-Shared Key** using **aircrack-ng** suite and any monitor-mode capable Wireless NIC. I used **Alfa AWUS036ACM**
-> Do not use them against networks you do not control.
+This guide shows how to crack a **WPA2 password** using a dictionary attack with the **Aircrack-ng** suite and a wireless adapter that supports monitor mode. I used the **Alfa AWUS036ACM**.
+
+While testing both frequency bands, I ran into some extra challenges with 5 GHz. So I decided to split the guide into 2 parts: **2.4 GHz** and **5 GHz**.
+
+I also created a separate, isolated Wi-Fi network called **Papa Tango** (military-style wording for “Penetration Testing”) specifically for testing.
+
+> Do not use them against networks you do not control!
 
 ---
 
@@ -10,10 +15,11 @@ This guide shows how to use a dictionary attack against **WPA2 Pre-Shared Key** 
 1. [Enable Monitor mode](#1-enable-monitor-mode)
 2. [Find the target network](#2-find-the-target-network)
 3. [Capture traffic to a file](#3-capture-traffic-to-a-file)
-4. [Force a handshake with deauthentication](#4-force-a-handshake-with-deauthentication)
-5. [Dictionary attack with aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
-6. [Quick command reference](#quick-command-reference)
-7. [Notes from the lab](#notes-from-the-lab)
+   - [3.1 Capture 2.4 GHz traffic](31-capture-24-ghz-traffic)
+5. [Force a handshake with deauthentication](#4-force-a-handshake-with-deauthentication)
+6. [Dictionary attack with aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
+7. [Quick command reference](#quick-command-reference)
+8. [Notes from the lab](#notes-from-the-lab)
 
 ---
 
@@ -89,7 +95,7 @@ Look for:
 
 > For privacy reasons, I have hidden all detected Wi-Fi networks and connected devices in the screenshot, except for my test network, which remains visible for demonstration purposes.
 
-> **NOTE:** I noticed that `airodump-ng` was scanning only the 2.4 GHz band (CH 1 to 11), while my phone was connected to a 5 GHz network. While working with both frequency bands, I encountered some additional challenges when testing 5 GHz networks. Therefore, I've decided to split this guide into 2 separate parts: **2.4 GHz** and **5 GHz**. 
+> **NOTE:** I noticed that `airodump-ng` was scanning only the 2.4 GHz band (CH 1 to 11), while my phone was connected to a 5 GHz network. Here I encountered some additional challenges when testing 5 GHz networks. Therefore, I've decided to split this guide into 2 separate parts: **2.4 GHz** and **5 GHz**. 
 
 To explicitly scan both bands, specify the `--band` parameter (my adapter doesn't support 6 GHz):
 
@@ -104,6 +110,7 @@ The `abg` parameter enables scanning of both supported frequency bands:
 Cancel with Ctrl+C when ready.
 
 ## 3. Capture traffic to a file
+
 ### 3.1 Capture 2.4 GHz traffic
 
 Lock airodump to the target network so the screen stays clean and the client list remains visible:
