@@ -5,6 +5,8 @@ While testing both frequency bands, I ran into some extra challenges with 5 GHz.
 
 I also created a separate, isolated Wi-Fi network called **Papa Tango** (military-style wording for “Penetration Testing”) specifically for testing.
 
+![Separate test network](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.0%20-%20Create%20testing%20network.png)
+
 > Do not use them against networks you do not control!
 
 ---
@@ -24,19 +26,43 @@ I also created a separate, isolated Wi-Fi network called **Papa Tango** (militar
 ---
 
 ## 0. Adapter Setup
-Shut down your VM and plug in your new USB Wi-Fi adapter. To make it available inside the VM, you need to identify it on the host (Proxmox, in my case) and pass it through to the VM. I do this directly through the Proxmox GUI: **VM → Hardware → Add → USB Device → Use USB Vendor/Device ID → *Select your adapter* → Add.** The adapter should now appear in the VM's USB device list and be accessible inside the guest OS (Kali, in my case).
+Shut down your VM and plug in your new USB Wi-Fi adapter. To make it available inside the VM, you need to identify it on the host (Proxmox, in my case) and pass it through to the VM. To identify adapter, run:
 
-My **Alfa AWUS036ACM** uses the MediaTek MT7612U chipset. On current Kali the **mt76x2u** driver is already in the kernel. so no external compilation needed.
-If you're using a different OS, visit the official [Alfa website](https://docs.alfa.com.tw/Product/AWUS036ACM/) to download the required drivers.
-
-# Detect adapter
+```bash
 lsusb
+```
+![Identify adapter on host](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.1%20-%20Locate%20Adapter%20on%20host.png)
 
-# Check module
+I pass it to the VM directly through the Proxmox GUI:
+**VM → Hardware → Add → USB Device → Use USB Vendor/Device ID → *Select your adapter* → Add.**
+![Add usb to a VM 1](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.2.1%20-%20Add%20usb%20to%20a%20VM.png)
+
+![Add usb to a VM 2](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.2.2%20-%20Add%20usb%20to%20a%20VM.png)
+
+The adapter should now appear in the VM's USB device list and be accessible inside the guest OS (Kali, in my case).
+![New usb added](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.3%20-%20New%20usb%20added.png)
+
+> My **Alfa AWUS036ACM** uses the MediaTek MT7612U chipset. On current Kali the **mt76x2u** driver is already in the kernel. so no external compilation needed.
+> If you're using a different OS, visit the official [Alfa website](https://docs.alfa.com.tw/Product/AWUS036ACM/) to download the required drivers.
+
+Start VM and check if the new adapter is detected:
+```bash
+lsusb
+```
+![Identify adapter on VM](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.4%20-%20Locate%20Adapter%20on%20VM.png)
+
+If you're using a different Linux distribution, such as Ubuntu, check whether the required Wi-Fi driver module is loaded.
+
+```bash
 lsmod | grep mt76
+```
 
-# Load if needed
+![Check driver module on VM](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.5%20-%20Check%20Module%20on%20VM.png)
+
+And load them if needed:
+```bash
 sudo modprobe mt76x2u
+```
 
 ---
 
@@ -48,6 +74,7 @@ Check current mode:
 iwconfig
 ```
 You should now see your wireless interface in **Managed Mode**. We need to switch it to **Monitor Mode**.
+![Check adapter mode](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/1.1%20-%20Check%20mode.png)
 
 Before proceeding, make sure you have the necessary tools installed. I use **Aircrack-ng**, a suite of tools for Wi-Fi security assessment and auditing. It allows you to monitor wireless networks, capture Wi-Fi traffic, test wireless security, and perform password attacks against captured WPA/WPA2 handshakes. It's commonly used in Kali Linux for authorized Wi-Fi security testing and pentesting.
 
