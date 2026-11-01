@@ -1,2 +1,157 @@
 # linux-aircrack
-This guide shows how to use a dictionary attack to crack the pre-shared key in a WPA2 network.
+This guide shows how to use a dictionary attack against **WPA2 Pre-Shared Key** using **aircrack-ng** suite and any monitor-mode capable Wireless NIC. I used **Alfa AWUS036ACM**
+> Do not use them against networks you do not control.
+
+---
+
+## Table of Contents
+
+0. [Adapter Setup](#0-adapter-setup)
+1. [Enable Monitor mode](#1-enable-monitor-mode)
+2. [Find the target network](#2-find-the-target-network)
+3. [Capture traffic to a file](#3-capture-traffic-to-a-file)
+4. [Force a handshake with deauthentication](#4-force-a-handshake-with-deauthentication)
+5. [Dictionary attack with aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
+6. [Quick command reference](#quick-command-reference)
+7. [Notes from the lab](#notes-from-the-lab)
+
+---
+
+## 0. Adapter Setup
+Shut down your VM and plug in your new USB Wi-Fi adapter. To make it available inside the VM, you need to identify it on the host (Proxmox, in my case) and pass it through to the VM. I do this directly through the Proxmox GUI: **VM → Hardware → Add → USB Device → Use USB Vendor/Device ID → *Select your adapter* → Add.** The adapter should now appear in the VM's USB device list and be accessible inside the guest OS (Kali, in my case).
+
+My **Alfa AWUS036ACM** uses the MediaTek MT7612U chipset. On current Kali the **mt76x2u** driver is already in the kernel. so no external compilation needed.
+If you're using a different OS, visit the official [Alfa website](https://docs.alfa.com.tw/Product/AWUS036ACM/) to download the required drivers.
+
+# Detect adapter
+lsusb
+
+# Check module
+lsmod | grep mt76
+
+# Load if needed
+sudo modprobe mt76x2u
+
+---
+
+## 1. Enable Monitor mode
+
+Check current mode:
+
+```bash
+iwconfig
+```
+You should now see your wireless interface in **Managed Mode**. We need to switch it to **Monitor Mode**.
+
+Before proceeding, make sure you have the necessary tools installed. I use **Aircrack-ng**, a suite of tools for Wi-Fi security assessment and auditing. It allows you to monitor wireless networks, capture Wi-Fi traffic, test wireless security, and perform password attacks against captured WPA/WPA2 handshakes. It's commonly used in Kali Linux for authorized Wi-Fi security testing and pentesting.
+
+**Aircrack-ng** is usually pre-installed in Kali. To check if it's installed and to see its version, run:
+
+```bash
+apt show aircrack-ng
+```
+
+If it's not installed, run the following commands:
+
+```bash
+sudo apt update
+sudo apt install aircrack-ng
+```
+
+Now lets switch it to **Monitor Mode**:
+
+```bash
+sudo airmon-ng check kill
+```
+This command checks for and terminates processes that may interfere with Monitor Mode. This helps prevent conflicts when switching adapter to **Monitor Mode**.
+
+```bash
+sudo airmon-ng start wlan0
+```
+The interface name has changed from **wlan0** to **wlan0mon**. Use **wlan0mon** for subsequent commands that require Monitor Mode.
+
+Verify:
+```bash
+iwconfig
+```
+The interface should now appear as wlan0mon (or similar) in Monitor mode.
+
+## 2. Find the target network
+```bash
+sudo airodump-ng wlan0mon
+```
+
+Look for:
+
+ESSID of your lab network
+BSSID (MAC of the access point)
+Channel
+Any connected clients (STATION section)
+
+Note the channel and BSSID. Cancel with Ctrl+C when ready.
+
+3. Capture traffic to a file
+Lock airodump to the target network so the screen stays clean and the client list remains visible:
+Bashsudo airodump-ng -c <CHANNEL> --bssid <BSSID> -w capture wlan0mon
+Example:
+Bashsudo airodump-ng -c 1 --bssid 28:C6:XX:XX:XX:XX -w WirelessHackingWPA wlan0mon
+Leave this terminal running. It will write files such as WirelessHackingWPA-01.cap.
+
+4. Force a handshake with deauthentication
+Open a second terminal and send deauth packets to a connected client (or broadcast):
+Bashsudo aireplay-ng --deauth 0 -a <BSSID> -c <CLIENT_MAC> wlan0mon
+
+--deauth 0 = keep sending until you stop it
+-a = access point BSSID
+-c = client MAC (recommended)
+
+After several deauth packets, the client should reconnect and generate a 4-way handshake.
+
+In the first terminal you should see:
+textWPA handshake: XX:XX:XX:XX:XX:XX
+Stop both tools (Ctrl+C).
+
+5. Dictionary attack with aircrack-ng
+Bashaircrack-ng -w /usr/share/wordlists/rockyou.txt WirelessHackingWPA-01.cap
+
+-w specifies the wordlist
+Without -w aircrack-ng will attempt a much slower pure brute-force
+
+If the password exists in the wordlist, aircrack-ng will display:
+textKEY FOUND! [ the_password ]
+If the password is not in the list, you will eventually see KEY NOT FOUND.
+
+Quick command reference
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ToolPurposeairmon-ngPut card into Monitor modeairodump-ngDiscover networks & capture trafficaireplay-ngDeauthentication attackaircrack-ngOffline dictionary attack
+
+Notes from the lab
+
+A “strong” looking password (mixed case + numbers + symbols) can still be cracked quickly if it appears in a common wordlist such as rockyou.txt.
+Capture quality matters: you need a complete 4-way handshake.
+VPN on the client does not prevent handshake capture (it starts after Layer 2).
+Protected Management Frames (PMF / 802.11w) can make deauth less effective.
