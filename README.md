@@ -34,12 +34,14 @@ lsusb
 ![Identify adapter on host](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.1%20-%20Locate%20Adapter%20on%20host.png)
 
 I pass it to the VM directly through the Proxmox GUI:
-**VM → Hardware → Add → USB Device → Use USB Vendor/Device ID → *Select your adapter* → Add.**
+- **VM → Hardware → Add → USB Device → Use USB Vendor/Device ID → *Select your adapter* → Add.**
+
 ![Add usb to a VM 1](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.2.1%20-%20Add%20usb%20to%20a%20VM.png)
 
 ![Add usb to a VM 2](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.2.2%20-%20Add%20usb%20to%20a%20VM.png)
 
 The adapter should now appear in the VM's USB device list and be accessible inside the guest OS (Kali, in my case).
+
 ![New usb added](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.3%20-%20New%20usb%20added.png)
 
 > My **Alfa AWUS036ACM** uses the MediaTek MT7612U chipset. On current Kali the **mt76x2u** driver is already in the kernel. so no external compilation needed.
@@ -74,6 +76,7 @@ Check current mode:
 iwconfig
 ```
 You should now see your wireless interface in **Managed Mode**. We need to switch it to **Monitor Mode**.
+
 ![Check adapter mode](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/1.1%20-%20Check%20mode.png)
 
 Before proceeding, make sure you have the necessary tools installed. I use **Aircrack-ng**, a suite of tools for Wi-Fi security assessment and auditing. It allows you to monitor wireless networks, capture Wi-Fi traffic, test wireless security, and perform password attacks against captured WPA/WPA2 handshakes. It's commonly used in Kali Linux for authorized Wi-Fi security testing and pentesting.
@@ -83,6 +86,8 @@ Before proceeding, make sure you have the necessary tools installed. I use **Air
 ```bash
 apt show aircrack-ng
 ```
+
+![Check Aircrack version](https://github.com/MikeMilenk/linux-aircrack/blob/d246afce55616abf2c08967f48d7e1a2fdefa37f/images/1.2%20-%20Check%20Aircrack%20version.png)
 
 If it's not installed, run the following commands:
 
@@ -101,18 +106,26 @@ This command checks for and terminates processes that may interfere with Monitor
 ```bash
 sudo airmon-ng start wlan0
 ```
+
+![Start monitor mode](https://github.com/MikeMilenk/linux-aircrack/blob/d246afce55616abf2c08967f48d7e1a2fdefa37f/images/1.3%20-%20Start%20monitor%20mode.png)
+
 The interface name has changed from **wlan0** to **wlan0mon**. Use **wlan0mon** for subsequent commands that require Monitor Mode.
 
 Verify:
 ```bash
 iwconfig
 ```
-The interface should now appear as wlan0mon (or similar) in Monitor mode.
+
+![Verify mode](https://github.com/MikeMilenk/linux-aircrack/blob/d246afce55616abf2c08967f48d7e1a2fdefa37f/images/1.4%20-%20Verify%20mode.png)
+
+The interface should now appear as **wlan0mon** (or similar) in **Monitor mode**.
 
 ## 2. Find the target network
 ```bash
 sudo airodump-ng wlan0mon
 ```
+
+![See all 2.4 GHz networks](https://github.com/MikeMilenk/linux-aircrack/blob/d246afce55616abf2c08967f48d7e1a2fdefa37f/images/2.1%20-%20See%20all%202%2C4%20GHz%20networks.png)
 
 Look for:
 
@@ -120,7 +133,7 @@ Look for:
 - **CHANNEL** (Channel 1, in my case)
 - **STATION** (connected clients)
 
-> For privacy reasons, I have hidden all detected Wi-Fi networks and connected devices in the screenshot, except for my test network, which remains visible for demonstration purposes.
+> For privacy reasons, I've hidden all detected Wi-Fi networks and connected devices in the screenshot, except for my test network, which remains visible for demonstration purposes.
 
 > **NOTE:** I noticed that `airodump-ng` was scanning only the 2.4 GHz band (CH 1 to 11), while my phone was connected to a 5 GHz network. Here I encountered some additional challenges when testing 5 GHz networks. Therefore, I've decided to split this guide into 2 separate parts: **2.4 GHz** and **5 GHz**. 
 
@@ -133,6 +146,8 @@ sudo airodump-ng --band abg wlan0mon
 The `abg` parameter enables scanning of both supported frequency bands:
 - `a` — 5 GHz
 - `b/g` — 2.4 GHz
+
+![See all band networks](https://github.com/MikeMilenk/linux-aircrack/blob/d246afce55616abf2c08967f48d7e1a2fdefa37f/images/2.2%20-%20See%20all%20band%20networks.png)
 
 Cancel with Ctrl+C when ready.
 
@@ -148,6 +163,8 @@ Example:
 ```bash
 sudo airodump-ng -c 11 --bssid 8A:D3:43:01:D1:DD -w TestingWPA2 wlan0mon
 ```
+![Capture traffic](https://github.com/MikeMilenk/linux-aircrack/blob/c9b3b9556eecb4d9212ef41050a726bd9bd91f08/images/3.1%20-%20Capture%202.4GHz%20%20traffic.png)
+
 Leave this terminal running. It will write files such as *TestingWPA2-01.cap*
 
 ## 4. Force a handshake with deauthentication
@@ -161,23 +178,33 @@ sudo aireplay-ng --deauth 0 -a <BSSID> -c <CLIENT_MAC> wlan0mon
 `-a` = access point BSSID
 `-c` = client MAC (recommended)
 
+![Deauth 2.4GHz](https://github.com/MikeMilenk/linux-aircrack/blob/c9b3b9556eecb4d9212ef41050a726bd9bd91f08/images/3.2%20-%20Deauth%202.4GHz.png)
+
 After several deauth packets, the client will reconnect and generate a 4-way handshake. Stop both tools (Ctrl+C).
 
 ## 5. Dictionary attack with aircrack-ng
 
-After stopping the capture process, several files were created in our home directory. These files contain the captured handshake data and related information. They were saved using the filename prefix specified with the `-w` parameter. We specifically need the `.cap` file, as it contains the captured Wi-Fi packets, including the WPA2 handshake.
+After stopping the capture process, several files were created in our home directory. These files contain the captured handshake data and related information.
+
+![Capture files](https://github.com/MikeMilenk/linux-aircrack/blob/c9b3b9556eecb4d9212ef41050a726bd9bd91f08/images/4%20-%20Capture%20files.png)
+
+They were saved using the filename prefix specified with the `-w` parameter. We specifically need the `.cap` file, as it contains the captured Wi-Fi packets, including the WPA2 handshake.
 
 ```bash
 aircrack-ng TestingWPA2-01.cap -w /usr/share/wordlists/rockyou.txt
 ```
 `-w` specifies the wordlist. Without `-w` aircrack-ng will attempt a much slower pure brute-force
 
+![Cracking 2.4 password](https://github.com/MikeMilenk/linux-aircrack/blob/c9b3b9556eecb4d9212ef41050a726bd9bd91f08/images/5.1%20-%20Cracking%202.4%20password.png)
+
 **Aircrack-ng** started the offline password cracking process, and CPU usage began increasing significantly.
 If the password exists in the wordlist, aircrack-ng will display:
 ```text
 KEY FOUND! [ the_password ]
 ```
-If the password is not in the list, you will eventually see `KEY NOT FOUND`.
+If the password is not in the list, you will eventually see `KEY NOT FOUND`. In my case, it took about 10 min to find the password using the **rockyou.txt** wordlist.
+
+![Cracked 2.4 password](https://github.com/MikeMilenk/linux-aircrack/blob/c9b3b9556eecb4d9212ef41050a726bd9bd91f08/images/5.2%20-%20Cracked%202.4%20password.png)
 
 
 
