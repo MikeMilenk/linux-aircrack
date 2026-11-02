@@ -13,15 +13,15 @@ I also created a separate, isolated Wi-Fi network called **Papa Tango** (militar
 
 ## Table of Contents
 
-0. [Adapter Setup](#0-adapter-setup)
-1. [Enable Monitor mode](#1-enable-monitor-mode)
-2. [Find the target network](#2-find-the-target-network)
-3. [Capture traffic to a file](#3-capture-traffic-to-a-file)
-   - [3.1 Capture 2.4 GHz traffic](31-capture-2.4-ghz-traffic)
-5. [Force a handshake with deauthentication](#4-force-a-handshake-with-deauthentication)
-6. [Dictionary attack with aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
-7. [Quick command reference](#quick-command-reference)
-8. [Notes from the lab](#notes-from-the-lab)
+[0. Adapter Setup](#0-adapter-setup)
+[1. Enable Monitor mode](#1-enable-monitor-mode)
+[2. Find the target network](#2-find-the-target-network)
+[3. Capture Traffic to a File](#3-capture-traffic-to-a-file)
+  - [3.1 Capture 2.4 GHz Traffic](#31-capture-24-ghz-traffic)
+[5. Force a handshake with deauthentication](#4-force-a-handshake-with-deauthentication)
+[6. Dictionary attack with aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
+[7. Quick command reference](#quick-command-reference)
+[8. Notes from the lab](#notes-from-the-lab)
 
 ---
 
