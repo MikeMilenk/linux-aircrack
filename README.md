@@ -16,10 +16,13 @@ I also created a separate, isolated Wi-Fi network called **Papa Tango** (militar
 - [0. Adapter Setup](#0-adapter-setup)
 - [1. Enable Monitor Mode](#1-enable-monitor-mode)
 - [2. Find the Target Network](#2-find-the-target-network)
-- [3. Capture Traffic to a File](#3-capture-traffic-to-a-file)
-  - [3.1 Capture 2.4 GHz Traffic](#31-capture-24-ghz-traffic)
+- [3. Capture 2.4 GHz Traffic to a File](#31-capture-24-ghz-traffic-to-a-file)
 - [4. Force a Handshake with Deauthentication](#4-force-a-handshake-with-deauthentication)
 - [5. Dictionary Attack with Aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
+- [6. Capture 5 GHz Traffic to a File](#31-capture-5-ghz-traffic-to-a-file)
+
+-
+-
 - [6. Quick Command Reference](#6-quick-command-reference)
 - [7. Notes from the Lab](#7-notes-from-the-lab)
 
@@ -151,9 +154,7 @@ The `abg` parameter enables scanning of both supported frequency bands:
 
 Cancel with Ctrl+C when ready.
 
-## 3. Capture traffic to a file
-
-### 3.1 Capture 2.4 GHz traffic
+## 3. Capture 2.4 GHz traffic to a file
 
 Lock airodump to the target network so the screen stays clean and the client list remains visible:
 ```bash
@@ -209,6 +210,52 @@ If the password is not in the list, you will eventually see `KEY NOT FOUND`. In 
 
 
 > A “strong” looking password (mixed case + numbers + symbols) can still be cracked quickly if it appears in a common wordlist such as `rockyou.txt`.
+
+## 6. Capture 2.4 GHz traffic to a file
+
+Initially, my 5GHz channel was 112. The problem was that I couldn't deauthenticate the device from the access point at all - it just sent back zero in the response, and on my phone I could see that the connection wasn't dropping (which was supposed to happen). After a few days I repeated the test. At this time the channel was 149, everything worked as expected, same as with the 2.4GHz network.
+
+1) Scanning for the target network using **airodump-ng** and remembering its **channel** with **BSSID**.
+
+   ![Listening all 5GHz network](https://github.com/MikeMilenk/linux-aircrack/blob/389f1a64f7481a5099dd0969d59d040b3bf03307/images/6.1%20-%20Listen%20all%205GHz%20network.png)
+
+2) Starting a targeted capture on that channel/BSSID, then deauthenticating a connected client with **aireplay-ng** to force a fresh WPA handshake.
+
+   ![Capturing 5GHz handshake](https://github.com/MikeMilenk/linux-aircrack/blob/389f1a64f7481a5099dd0969d59d040b3bf03307/images/6.2%20-%20Capture%205GHz%20handshake.png)
+
+3) Running an offline dictionary attack against the captured handshake using **aircrack-ng** with the **rockyou.txt** wordlist.
+
+   ![Finding 5GHz password](https://github.com/MikeMilenk/linux-aircrack/blob/389f1a64f7481a5099dd0969d59d040b3bf03307/images/6.3%20-%20Found%205GHz%20password.png)
+ 
+
+After a bit of googling, I found out that there are **DFS** channels. These exist because part of the 5GHz band overlaps with frequencies reserved for weather and aviation radar — devices are required to detect radar signals and avoid interfering with them before transmitting on these channels. That's why my adapter can see these channels, but can’t inject packets on them. Packet injection on **DFS channels** requires certified radar-detection support in the driver/firmware, which most open-source Linux Wi-Fi drivers, including mine, don’t implement. So they block transmission there to stay compliant with regulations. I decided to check for myself which channels my adapter could and couldn’t inject on:
+
+```bash
+iw list
+```
+
+![5GHz radar channels](https://github.com/MikeMilenk/linux-aircrack/blob/389f1a64f7481a5099dd0969d59d040b3bf03307/images/6.4%20-%205GHz%20radar%20channels.png)
+
+In the output of `iw list`, under **Band 2 → Frequencies**, you can see which channels are marked with **No IR** and **Radar detection** — these are the channels where packet injection (and therefore deauthentication) isn't possible. During my 1st attempt, the 5GHz network happened to be on channel 112, which was exactly one of these restricted channels.
+
+I checked to see which regulatory domain the adapter was using and whether it was unnecessarily restricting which channels I could transmit on.
+
+```bash
+iw reg get
+```
+
+The country was set to `00-UNSET` — meaning the adapter was running under the most restrictive, generic international configuration, with a lot of channels locked to `PASSIVE-SCAN` only (receive-only, no transmission at all). I set the region to Canada with:
+
+```bash
+sudo iw reg set CA
+```
+
+![Changing country code](https://github.com/MikeMilenk/linux-aircrack/blob/b430a344f420ccace73b0ad2a63c6b1e0f733774/images/6.5%20-%20Changing%20country%20code.png)
+
+I did this because the default ``00`` region is conservative. It doesn’t know what country’s regulations actually apply, so it locks down transmission on anything it isn’t sure is legal. Setting the correct region (CA) lets the driver apply Canada’s actual regulatory rules instead, which unlocks transmission on channels that are legal in Canada. Switching to the CA region also bumped the allowed TX power on some non-DFS channels, but it didn't unlock any new non-DFS channels that weren't already available.
+
+In this situation, my adapter with *mt76x2u* driver doesn’t support packet injection on DFS channels, but this is possible with other certified adapters. In my case, I just waited, either for the network to switch to a different non-DFS channel on its own, or for the client to naturally reconnect to the network at some point, so I could passively catch the handshake when that happened.
+
 
 Capture quality matters: you need a complete 4-way handshake.
 
