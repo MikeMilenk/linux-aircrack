@@ -19,12 +19,7 @@ I also created a separate, isolated Wi-Fi network called **Papa Tango** (militar
 - [3. Capture 2.4 GHz Traffic to a File](#31-capture-24-ghz-traffic-to-a-file)
 - [4. Force a Handshake with Deauthentication](#4-force-a-handshake-with-deauthentication)
 - [5. Dictionary Attack with Aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
-- [6. Capture 5 GHz Traffic to a File](#31-capture-5-ghz-traffic-to-a-file)
-
--
--
-- [6. Quick Command Reference](#6-quick-command-reference)
-- [7. Notes from the Lab](#7-notes-from-the-lab)
+- [6. Capture 5GHz Traffic to a File](#31-capture-5-ghz-traffic-to-a-file)
 
 ---
 
