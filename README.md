@@ -211,9 +211,9 @@ If the password is not in the list, you will eventually see `KEY NOT FOUND`. In 
 
 > A “strong” looking password (mixed case + numbers + symbols) can still be cracked quickly if it appears in a common wordlist such as `rockyou.txt`.
 
-## 6. Capture 2.4 GHz traffic to a file
+## 6. Capture 5GHz traffic to a file
 
-Initially, my 5GHz channel was 112. The problem was that I couldn't deauthenticate the device from the access point at all - it just sent back zero in the response, and on my phone I could see that the connection wasn't dropping (which was supposed to happen). After a few days I repeated the test. At this time the channel was 149, everything worked as expected, same as with the 2.4GHz network.
+Initially, my 5GHz channel was `112`. The problem was that I couldn't deauthenticate the device from the access point at all - it just sent back zero in the response, and on my phone I could see that the connection wasn't dropping (which was supposed to happen). After a few days I repeated the test. At this time the channel was `149`, everything worked as expected, same as with the 2.4GHz network.
 
 1) Scanning for the target network using **airodump-ng** and remembering its **channel** with **BSSID**.
 
@@ -227,6 +227,17 @@ Initially, my 5GHz channel was 112. The problem was that I couldn't deauthentica
 
    ![Finding 5GHz password](https://github.com/MikeMilenk/linux-aircrack/blob/389f1a64f7481a5099dd0969d59d040b3bf03307/images/6.3%20-%20Found%205GHz%20password.png)
  
+
+So I decided to figure out whether my adapter could actually inject packets on channel `112` at all, since deauth wasn’t working there. So I ran:
+
+```bash
+sudo iw dev wlan0mon set channel 112
+sudo aireplay-ng --test wlan0mon
+```
+
+This  tests packet injection, separate from just scanning/receiving, which is what showed that channel `112` was blocked for transmission, while channel `149` was injecting as expected.
+
+![Testing injection on different channels](https://github.com/MikeMilenk/linux-aircrack/blob/4f54f23412022baca6c40a36d275d035d763a6ac/images/6.3.1%20-%20testing%20different%20channels.png)
 
 After a bit of googling, I found out that there are **DFS** channels. These exist because part of the 5GHz band overlaps with frequencies reserved for weather and aviation radar — devices are required to detect radar signals and avoid interfering with them before transmitting on these channels. That's why my adapter can see these channels, but can’t inject packets on them. Packet injection on **DFS channels** requires certified radar-detection support in the driver/firmware, which most open-source Linux Wi-Fi drivers, including mine, don’t implement. So they block transmission there to stay compliant with regulations. I decided to check for myself which channels my adapter could and couldn’t inject on:
 
