@@ -16,17 +16,17 @@ I also created a separate, isolated Wi-Fi network called **Papa Tango** (militar
 - [0. Adapter Setup](#0-adapter-setup)
 - [1. Enable Monitor Mode](#1-enable-monitor-mode)
 - [2. Find the Target Network](#2-find-the-target-network)
-- [3. Capture 2.4 GHz Traffic to a File](#31-capture-24-ghz-traffic-to-a-file)
+- [3. Capture 2.4 GHz Traffic to a File](#3-capture-24-ghz-traffic-to-a-file)
 - [4. Force a Handshake with Deauthentication](#4-force-a-handshake-with-deauthentication)
 - [5. Dictionary Attack with Aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
-- [6. Capture 5GHz Traffic to a File](#31-capture-5-ghz-traffic-to-a-file)
+- [6. Capture 5GHz Traffic to a File](#6-capture-5ghz-traffic-to-a-file)
    - [6.1 Initial Issue](#61-initial-issue)
    - [6.2 Standard 5GHz Traffic Capture](#62-standard-5ghz-traffic-capture)
-   - [6.3 Why Deauthentication Wasn’t Working](#63-why-deauthentication-wasn’t-working)
+   - [6.3 Why Deauthentication Wasn’t Working](#63-why-deauthentication-wasnt-working)
    - [6.4 Country Restrictions](#64-country-restrictions)
-   - [6.5 Restricted Channels on the 2.4GHz Network](#65-restricted-channels-on-the-2.4ghz-network)
+   - [6.5 Restricted Channels on the 2.4GHz Network](#65-restricted-channels-on-the-24ghz-network)
  - [7. Important Notes](#7-important-notes)
- - [8. What About WPA3?](#8-what-about-wpa3?)
+ - [8. What About WPA3?](#8-what-about-wpa3)
 
 
 ---
