@@ -211,8 +211,15 @@ If the password is not in the list, you will eventually see `KEY NOT FOUND`. In 
 ![Cracked 2.4 password](https://github.com/MikeMilenk/linux-aircrack/blob/c9b3b9556eecb4d9212ef41050a726bd9bd91f08/images/5.2%20-%20Cracked%202.4%20password.png)
 
 
-
 > A “strong” looking password (mixed case + numbers + symbols) can still be cracked quickly if it appears in a common wordlist such as `rockyou.txt`.
+
+If you want to revert the adapter from `Monitor mode` back to `Managed mode` (normal Wi-Fi connection mode), just run:
+```bash
+sudo airmon-ng stop wlan0mon
+```
+
+The interface goes back to `wlan0` instead of `wlan0mon`.
+
 
 ## 6. Capture 5GHz traffic to a file
 
