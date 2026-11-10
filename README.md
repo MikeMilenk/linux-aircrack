@@ -1,11 +1,11 @@
 # linux-aircrack
-This guide shows how to crack a **WPA2 password** using a dictionary attack with the **Aircrack-ng** suite and a wireless adapter that supports monitor mode. I used the **Alfa AWUS036ACM**.
-
-While testing both frequency bands, I ran into some extra challenges with 5GHz. So I decided to split the guide into 2 parts: **2.4 GHz** and **5 GHz**.
+This guide shows how to crack a **WPA2 Wi-Fi password** using an offline dictionary attack with the **Aircrack-ng** suite and a wireless adapter that supports monitor mode. I used the **Alfa AWUS036ACM**.
 
 I also created a separate, isolated Wi-Fi network called **Papa Tango** (military-style wording for “Penetration Testing”) specifically for testing.
 
 ![Separate test network](https://github.com/MikeMilenk/linux-aircrack/blob/0bcdf262ddbc4948a7fd458fa6132c4c9d4dd5f1/images/0.0%20-%20Create%20testing%20network.png)
+
+While testing both frequency bands, I ran into some extra challenges with 5GHz. So I decided to split the guide into 2 parts: **2.4 GHz** and **5 GHz**.
 
 > Do not use them against networks you do not control!
 
