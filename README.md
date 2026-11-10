@@ -284,6 +284,8 @@ In this situation, my adapter with *mt76x2u* driver doesn’t support packet inj
 
 I ran `iw list` again and checked the **2.4GHz** channels on **Band 1 → Frequencies**, and saw some `No IR` channels there too. Channels `12–14` are marked that way because they fall outside the 1–11 range allowed in North America — they're used in other regions instead (12–13 in Europe, 14 in Japan) - so transmission on them isn't permitted under the CA regulatory domain the adapter is set to.
 
+![2.4GHz radar channels](https://github.com/MikeMilenk/linux-aircrack/blob/c3745aba3867b8450cb5c5b08c48ebb43b98e30b/images/6.6%20-%202.4GHz%20radar%20channels.png)
+
 ## 7. Important Notes
 
 1) **Capture quality matters** — if the handshake isn’t captured completely (for example, it gets cut off mid-way due to a weak signal or bad timing during deauth), **aircrack-ng** won’t be able to verify it, even with the correct password in the wordlist. You need the full 4-way handshake.
