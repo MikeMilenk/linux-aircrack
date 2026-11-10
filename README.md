@@ -1,7 +1,7 @@
 # linux-aircrack
 This guide shows how to crack a **WPA2 password** using a dictionary attack with the **Aircrack-ng** suite and a wireless adapter that supports monitor mode. I used the **Alfa AWUS036ACM**.
 
-While testing both frequency bands, I ran into some extra challenges with 5 GHz. So I decided to split the guide into 2 parts: **2.4 GHz** and **5 GHz**.
+While testing both frequency bands, I ran into some extra challenges with 5GHz. So I decided to split the guide into 2 parts: **2.4 GHz** and **5 GHz**.
 
 I also created a separate, isolated Wi-Fi network called **Papa Tango** (military-style wording for “Penetration Testing”) specifically for testing.
 
@@ -20,6 +20,14 @@ I also created a separate, isolated Wi-Fi network called **Papa Tango** (militar
 - [4. Force a Handshake with Deauthentication](#4-force-a-handshake-with-deauthentication)
 - [5. Dictionary Attack with Aircrack-ng](#5-dictionary-attack-with-aircrack-ng)
 - [6. Capture 5GHz Traffic to a File](#31-capture-5-ghz-traffic-to-a-file)
+   - [6.1 Initial Issue](#61-initial-issue)
+   - [6.2 Standard 5GHz Traffic Capture](#62-standard-5ghz-traffic-capture)
+   - [6.3 Why Deauthentication Wasn’t Working](#63-why-deauthentication-wasn’t-working)
+   - [6.4 Country Restrictions](#64-country-restrictions)
+   - [6.5 Restricted Channels on the 2.4GHz Network](#65-restricted-channels-on-the-2.4ghz-network)
+ - [7. Important Notes](#7-important-notes)
+ - [8. What About WPA3?](#8-what-about-wpa3?)
+
 
 ---
 
@@ -208,7 +216,13 @@ If the password is not in the list, you will eventually see `KEY NOT FOUND`. In 
 
 ## 6. Capture 5GHz traffic to a file
 
-Initially, my 5GHz channel was `112`. The problem was that I couldn't deauthenticate the device from the access point at all - it just sent back zero in the response, and on my phone I could see that the connection wasn't dropping (which was supposed to happen). After a few days I repeated the test. At this time the channel was `149`, everything worked as expected, same as with the 2.4GHz network.
+### 6.1 Initial Issue
+
+Initially, my 5GHz channel was `112`. The problem was that I couldn't deauthenticate the device from the access point at all - it just sent back zero in the response, and on my phone I could see that the connection wasn't dropping (which was supposed to happen).
+
+### 6.2 Standard 5GHz Traffic Capture
+
+After a few days I repeated the test. At this time the channel was `149`, everything worked as expected, same as with the 2.4GHz network.
 
 1) Scanning for the target network using **airodump-ng** and remembering its **channel** with **BSSID**.
 
@@ -222,6 +236,8 @@ Initially, my 5GHz channel was `112`. The problem was that I couldn't deauthenti
 
    ![Finding 5GHz password](https://github.com/MikeMilenk/linux-aircrack/blob/389f1a64f7481a5099dd0969d59d040b3bf03307/images/6.3%20-%20Found%205GHz%20password.png)
  
+
+### 6.3 Why Deauthentication Wasn’t Working
 
 So I decided to figure out whether my adapter could actually inject packets on channel `112` at all, since deauth wasn’t working there. So I ran:
 
@@ -244,7 +260,9 @@ iw list
 
 In the output of `iw list`, under **Band 2 → Frequencies**, you can see which channels are marked with **No IR** and **Radar detection** — these are the channels where packet injection (and therefore deauthentication) isn't possible. During my 1st attempt, the 5GHz network happened to be on channel 112, which was exactly one of these restricted channels.
 
-I checked to see which regulatory domain the adapter was using and whether it was unnecessarily restricting which channels I could transmit on.
+### 6.4 Country Restrictions
+
+Then I checked which regulatory domain the adapter was using and whether it was unnecessarily restricting which channels I could transmit on.
 
 ```bash
 iw reg get
@@ -262,9 +280,24 @@ I did this because the default ``00`` region is conservative. It doesn’t know 
 
 In this situation, my adapter with *mt76x2u* driver doesn’t support packet injection on DFS channels, but this is possible with other certified adapters. In my case, I just waited, either for the network to switch to a different non-DFS channel on its own, or for the client to naturally reconnect to the network at some point, so I could passively catch the handshake when that happened.
 
+### 6.5 Restricted Channels on the 2.4GHz Network
 
-Capture quality matters: you need a complete 4-way handshake.
+I ran `iw list` again and checked the **2.4GHz** channels on **Band 1 → Frequencies**, and saw some `No IR` channels there too. Channels `12–14` are marked that way because they fall outside the 1–11 range allowed in North America — they're used in other regions instead (12–13 in Europe, 14 in Japan) - so transmission on them isn't permitted under the CA regulatory domain the adapter is set to.
 
-VPN on the client does not prevent handshake capture (it starts after Layer 2).
+## 7. Important Notes
 
-Protected Management Frames (PMF / 802.11w) can make deauth less effective.
+1) **Capture quality matters** — if the handshake isn’t captured completely (for example, it gets cut off mid-way due to a weak signal or bad timing during deauth), **aircrack-ng** won’t be able to verify it, even with the correct password in the wordlist. You need the full 4-way handshake.
+
+2) **VPN on client doesn’t block capture** — the handshake happens at Layer 2 (connecting to Wi-Fi), before IP even comes up, let alone a VPN tunnel. VPN only encrypts application traffic after the connection is already established, it has no effect on the handshake itself.
+
+3) **PMF can weaken deauth** — if _Protected Management Frames_ (PMF/802.11w) is enabled on the access point, spoofed deauth frames get ignored by the client, and the attack may simply not work, regardless of channel or adapter. PMF is optional on WPA2 but mandatory on WPA3, so it’s worth checking for either.
+
+4) **Auto-channel and MAC randomization** — routers can switch channels mid-session to avoid interference, which can invalidate an ongoing capture, and modern devices often randomize their MAC address per session, so a client MAC noted earlier may already be stale.
+
+5) **Client in power-saving mode** — some devices respond less reliably to deauth when the screen is off/sleeping, due to Wi-Fi power-saving policies.
+
+## 8. What about WPA3?
+
+**What about WPA3**
+
+**WPA3** doesn't use a 4-way handshake like WPA2, it uses **SAE** (Simultaneous Authentication of Equals, based on the **Dragonfly key exchange**). Each password attempt requires live interaction with the Access Point in real time, so there's no static exchange you can capture once and crack offline afterward. Combined with PMF being mandatory, this makes WPA3 resistant to the deauth packets injection + offline-crack chain that works against **WPA** or **WPA2**.
