@@ -218,6 +218,8 @@ If you want to revert the adapter from `Monitor mode` back to `Managed mode` (no
 sudo airmon-ng stop wlan0mon
 ```
 
+![Disable Monitor Mode](https://github.com/MikeMilenk/linux-aircrack/blob/fcd1c1b5655e9ad7727216a6398375d5b5e4c52e/images/5.3%20-%20Disable%20Monitor%20mode.png)
+
 The interface goes back to `wlan0` instead of `wlan0mon`.
 
 
